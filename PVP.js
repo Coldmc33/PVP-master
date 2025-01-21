@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         pvp master
 // @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  let your pvp better--jk:D||press "F" when pvp||copy by Advanced zoom->https://update.greasyfork.org/scripts/493029/Advanced%20zoom.user.js
+// @version      0.2
+// @description  Enhance your PVP experience on miniblox.
 // @author       You
 // @match        https://miniblox.io/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=miniblox.io
@@ -15,60 +15,58 @@
 (function() {
     'use strict';
 
-    // Define constants for zoom levels and increment
-    const minZoom = -100; // 100%
-    const maxZoom = -100; // 500% (adjusted maximum zoom)
-    const zoomIncrement = 20; // 20% (increased for faster zooming)
+    const KEY_F = 'f';
+    const MIN_ZOOM = 50; // 50%
+    const MAX_ZOOM = 500; // 500%
+    const ZOOM_INCREMENT = 20; // 20%
 
-    // Initial zoom level
-    let zoomLevel = -100; // 100%
+    let zoomLevel = 100; // Start at 100%
 
-    // Function to smoothly zoom the canvas
-    function zoomCanvas(zoom) {
+    function zoomCanvas(zoomChange) {
         const canvas = document.querySelector('canvas');
-
         if (!canvas) {
             console.error('Canvas not found.');
             return;
         }
 
-        // Calculate the new zoom level within the allowed range
-        zoomLevel = Math.min(Math.max(zoomLevel + zoom, minZoom), maxZoom);
-
-        // Apply the zoom transformation with a smooth transition
-        canvas.style.transition = 'transform 0.5s ease';
+        zoomLevel = Math.min(Math.max(zoomLevel + zoomChange, MIN_ZOOM), MAX_ZOOM);
         canvas.style.transform = `scale(${zoomLevel / 100})`;
+        displayZoomLevel();
     }
-    // Function to handle zooming when 'F' key is pressed
+
+    function displayZoomLevel() {
+        // Display the current zoom level on the screen
+        let zoomDisplay = document.getElementById('zoom-display');
+        if (!zoomDisplay) {
+            zoomDisplay = document.createElement('div');
+            zoomDisplay.id = 'zoom-display';
+            zoomDisplay.style.position = 'absolute';
+            zoomDisplay.style.top = '10px';
+            zoomDisplay.style.right = '10px';
+            zoomDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            zoomDisplay.style.color = 'white';
+            zoomDisplay.style.padding = '5px';
+            document.body.appendChild(zoomDisplay);
+        }
+        zoomDisplay.textContent = `Zoom Level: ${zoomLevel}%`;
+    }
+
     function handleZoom(event) {
-        if (event.key === 'f' || event.key === 'F') {
+        if (event.key.toLowerCase() === KEY_F) {
             if (event.type === 'keydown') {
-                // Zoom in when 'F' key is pressed
-                zoomCanvas(zoomIncrement);
+                zoomCanvas(ZOOM_INCREMENT);
             } else if (event.type === 'keyup') {
-                // Reset zoom to 100% when 'F' key is released
                 zoomCanvas(100 - zoomLevel);
             }
         }
     }
 
-    // Add event listeners for keydown and keyup events to handle zooming with 'F' key
     window.addEventListener('keydown', handleZoom);
     window.addEventListener('keyup', handleZoom);
 
-    // Event listener for zooming with mouse wheel
     document.addEventListener('wheel', function(event) {
-        // Prevent the default scroll behavior
         event.preventDefault();
-
-        // Determine the direction of the scroll
         const direction = event.deltaY > 0 ? -1 : 1;
-
-        // Zoom the canvas if zooming is active
-        if (event.key === 'f' || event.key === 'F') {
-            if (document.hasFocus()) {
-                zoomCanvas(zoomIncrement * direction);
-            }
-        }
-    })
+        zoomCanvas(ZOOM_INCREMENT * direction);
+    });
 })();
